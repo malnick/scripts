@@ -1,0 +1,37 @@
+
+Starting Nmap 6.40 ( http://nmap.org ) at 2014-03-20 09:11 PDT
+Nmap scan report for 10.0.20.1
+Host is up (0.0095s latency).
+Nmap scan report for 10.0.20.2
+Host is up (0.0059s latency).
+Nmap scan report for 10.0.20.100
+Host is up (0.0098s latency).
+Nmap scan report for 10.0.20.102
+Host is up (0.049s latency).
+Nmap scan report for 10.0.20.103
+Host is up (0.0058s latency).
+Nmap scan report for 10.0.20.104
+Host is up (0.00020s latency).
+Nmap scan report for 10.0.20.105
+Host is up (0.0062s latency).
+Nmap scan report for 10.0.20.106
+Host is up (0.045s latency).
+Nmap scan report for 10.0.20.109
+Host is up (0.019s latency).
+Nmap scan report for 10.0.20.114
+Host is up (0.0047s latency).
+Nmap scan report for 10.0.20.116
+Host is up (0.0012s latency).
+Nmap scan report for 10.0.20.117
+Host is up (0.042s latency).
+Nmap scan report for 10.0.20.118
+Host is up (0.039s latency).
+Nmap scan report for 10.0.20.124
+Host is up (0.017s latency).
+Nmap scan report for 10.0.20.125
+Host is up (0.041s latency).
+Nmap scan report for 10.0.20.128
+Host is up (0.016s latency).
+Nmap scan report for 10.0.20.136
+Host is up (0.0011s latency).
+Nmap done: 255 IP addresses (17 hosts up) scanned in 2.91 seconds
