@@ -1,0 +1,14 @@
+# deploying
+$ bundle exec rake deploy
+->
+$ bundle exec "rake deploy"
+
+# installing new themes
+$ bundle exec rake install[slash]
+->
+$ bundle exec rake "install[slash]"
+
+# generating a blog post
+$ rake new_post[Issues with zsh and Octopress]
+->
+$ rake "new_post[Issues with zsh and Octopress]"
