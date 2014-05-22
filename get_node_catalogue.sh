@@ -1,4 +1,5 @@
 #!/bin/bash
 # Get a node catalogue with the psudo RESTful Puppet API
+# This runs out of the box on the master for the master, augment node certname in string as needed
 
-curl --cert /etc/puppetlabs/puppet/ssl/certs/master.puppetlabs.vm.pem --key /etc/puppetlabs/puppet/ssl/private_keys/master.puppetlabs.vm.pem --cacert /etc/puppetlabs/puppet/ssl/ca/ca_crt.pem -H 'Accept: pson' https://master.puppetlabs.vm:8140/production/catalog/master.puppetlabs.vm > master_catalogue.json
+curl --cert $(puppet config print ssldir)/certs/$(facter fqdn).pem --key $(puppet config print ssldir)/private_keys/$(facter fqdn).pem --cacert $(puppet config print ssldir)/ca/ca_crt.pem -H 'Accept: pson' https://master.puppetlabs.vm:8140/production/catalog/master.puppetlabs.vm > master_catalogue.json
