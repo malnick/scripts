@@ -1,19 +1,25 @@
 #!/bin/bash
-# Author: Jeff Malnick
+cleanup () {
+	test -e ~/.ssh/labgit.sock && ssh -S ~/.ssh/labgit.sock -O exit root@$GITLAB
+	test -e ~/.ssh/intgit.sock && ssh -S ~/.ssh/intgit.sock -O exit root@localhost
+	test -e ~/.ssh/jump.sock && ssh -S ~/.ssh/jump.sock -O exit root@$JUMPHOST
+	exit $@
+}
+trap cleanup SIGHUP SIGINT SIGTERM
 
-test -e ~/.ssh || { echo "Create an ssh dir"; exit 1; }
-
-VPNENV=`echo $(naclient status | awk 'NR==4' | cut -d: -f2)`
-DALLAS="a1b2" #VPN Gateway 
-LABGIT="10.0.1.2" #Local git repo
-INTGIT="172.24.3.246" #Integration git repo behind jumphost
-JUMPHOST="172.20.100.3" #Jumphost
-
-stagelatest(){
+stagelatest () {
 	LATESTBAK=$(ls -t /var/opt/gitlab/backups/ | head -1)
 	rm /tmp/1111111111_gitlab_backup.tar
 	ln -s /var/opt/gitlab/backups/$LATESTBAK /tmp/1111111111_gitlab_backup.tar
 }
+
+test -e ~/.ssh || { echo "Create an ssh dir"; exit 1; }
+
+VPNENV=`echo $(naclient status | awk 'NR==4' | cut -d: -f2)`
+DALLAS="YourVPNGatewayName"
+LABGIT="10.10.1.100" # A Local Git Server
+INTGIT="172.24.1.200" # A Corralled Integration Git Server 
+JUMPHOST="172.20.2.3" # Jump Host to Integration Git Server
 
 if [ "$VPNENV" == "$DALLAS" ]
 then
@@ -35,18 +41,25 @@ then
 	scp -o 'ControlPath ~/.ssh/labgit.sock' root@$LABGIT:/tmp/1111111111_gitlab_backup.tar /tmp/
 	echo "Copying lab git backup from localhost to integration git server"
 	scp -o 'ControlPath ~/.ssh/intgit.sock' -P 5000 /tmp/1111111111_gitlab_backup.tar root@localhost:/var/opt/gitlab/backups
-	echo "Running restore on integration git server"
-	ssh -S ~/.ssh/intgit.sock root@localhost -p 5000 BACKUP=1111111111_gitlab_backup.tar gitlab-rake gitlab:backup:restore
-	echo "Complete"
+	echo "Would you like to run restore on the integration server now?" 
+	read restore 
+	if [ "$restore" == "yes" || "y" || "Y" || "Yes" ]
+	then
+		echo "Running restore on integration git server"
+		ssh -S ~/.ssh/intgit.sock root@localhost -p 5000 BACKUP=1111111111_gitlab_backup.tar gitlab-rake gitlab:backup:restore
+	else
+		echo "Not running restore" 
+		echo "Backup located at /var/opt/gitlab/backups/1111111111_gitlab_backup.tar"
+		echo "-----"
+		echo "To backup manually run:"
+		echo "BACKUP=1111111111_gitlab_backup.tar gitlab-rake gitlab:backup:restore"
+	fi
+	cleanup 
 else
 
 	echo "VPN Enviro not correct, connected to $VPNENV" 
 	echo "Check VPN connection to d4p4, or start NA Client"
-	exit 1
-
+	cleanup 1
 fi
 
-ssh -S ~/.ssh/labgit.sock -O exit root@$GITLAB
-ssh -S ~/.ssh/intgit.sock -O exit root@localhost
-ssh -S ~/.ssh/jump.sock -O exit root@$JUMPHOST
 
