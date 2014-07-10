@@ -43,7 +43,7 @@ then
 	scp -o 'ControlPath ~/.ssh/intgit.sock' -P 5000 /tmp/1111111111_gitlab_backup.tar root@localhost:/var/opt/gitlab/backups
 	echo "Would you like to run restore on the integration server now?" 
 	read restore 
-	if [ "$restore" == "yes" || "y" || "Y" || "Yes" ]
+	if [[ "$restore" == "yes" || "y" || "Y" || "Yes" ]]
 	then
 		echo "Running restore on integration git server"
 		ssh -S ~/.ssh/intgit.sock root@localhost -p 5000 BACKUP=1111111111_gitlab_backup.tar gitlab-rake gitlab:backup:restore
