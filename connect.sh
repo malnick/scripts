@@ -1,5 +1,6 @@
 #!/bin/bash
 cleanup () {
+	echo "Cleaning up sockets and exiting"
 	test -e ~/.ssh/labgit.sock && ssh -S ~/.ssh/labgit.sock -O exit root@$GITLAB
 	test -e ~/.ssh/intgit.sock && ssh -S ~/.ssh/intgit.sock -O exit root@localhost
 	test -e ~/.ssh/jump.sock && ssh -S ~/.ssh/jump.sock -O exit root@$JUMPHOST
@@ -13,13 +14,27 @@ stagelatest () {
 	ln -s /var/opt/gitlab/backups/$LATESTBAK /tmp/1111111111_gitlab_backup.tar
 }
 
+getport () {
+	PORT=$(( $RANDOM % 1000 + 5000 ))
+	CHECK=$(netstat -an |grep LISTEN | egrep "[.:]${PORT}\s" > /dev/null; echo $?)
+	while [[ "$CHECK" == 0 ]]
+	do
+		echo "Port: $PORT is in use by another process, choosing another port."
+		PORT=$(( $RANDOM % 1000 + port ))
+
+		CHECK=$(netstat -an |grep LISTEN | egrep "[.:]$PORT\s" > /dev/null; echo $?)
+	done
+	echo "Setting port to $PORT"
+}
+getport
+
 test -e ~/.ssh || { echo "Create an ssh dir"; exit 1; }
 
 VPNENV=`echo $(naclient status | awk 'NR==4' | cut -d: -f2)`
-DALLAS="YourVPNGatewayName"
-LABGIT="10.10.1.100" # A Local Git Server
-INTGIT="172.24.1.200" # A Corralled Integration Git Server 
-JUMPHOST="172.20.2.3" # Jump Host to Integration Git Server
+DALLAS="d4p4"
+LABGIT="10.144.36.226"
+INTGIT="172.24.3.246"
+JUMPHOST="172.20.132.3"
 
 if [ "$VPNENV" == "$DALLAS" ]
 then
@@ -28,11 +43,11 @@ then
 	echo "Connecting to git in labs:"
 	ssh -o 'ControlMaster auto' -o 'ControlPath ~/.ssh/labgit.sock' -N -f root@$LABGIT 
 	echo "Connecting to jumphost:"
-	ssh -o 'ControlMaster auto' -o 'ControlPath ~/.ssh/jump.sock' -N -f -L 5000:$INTGIT:22 root@$JUMPHOST
+	ssh -o 'ControlMaster auto' -o 'ControlPath ~/.ssh/jump.sock' -N -f -L $PORT:$INTGIT:22 root@$JUMPHOST
 	echo "Connecting to git in integration:"
-	ssh -o 'ControlMaster auto' -o 'ControlPath ~/.ssh/intgit.sock' -N -f root@localhost -p 5000
+	ssh -o 'ControlMaster auto' -o 'ControlPath ~/.ssh/intgit.sock' -o 'UserKnownHostsFile /dev/null' -N -f root@localhost -p $PORT
 
-	# SSH labgit and run rake backup, scp to latest backup to host 
+	# SSH labgit and run rake backup, scp latest backup to host 
 	echo "Running gitlab:backup:create"
 	ssh -S ~/.ssh/labgit.sock root@$LABGIT gitlab-rake gitlab:backup:create
 	echo "Staging backup in /tmp"
@@ -40,13 +55,13 @@ then
 	echo "Copying over from lab git to localhost"
 	scp -o 'ControlPath ~/.ssh/labgit.sock' root@$LABGIT:/tmp/1111111111_gitlab_backup.tar /tmp/
 	echo "Copying lab git backup from localhost to integration git server"
-	scp -o 'ControlPath ~/.ssh/intgit.sock' -P 5000 /tmp/1111111111_gitlab_backup.tar root@localhost:/var/opt/gitlab/backups
+	scp -o 'ControlPath ~/.ssh/intgit.sock' -P $PORT /tmp/1111111111_gitlab_backup.tar root@localhost:/var/opt/gitlab/backups
 	echo "Would you like to run restore on the integration server now?" 
 	read restore 
-	if [[ "$restore" == "yes" || "y" || "Y" || "Yes" ]]
+	if [[ $restore =~ ^y ]]
 	then
 		echo "Running restore on integration git server"
-		ssh -S ~/.ssh/intgit.sock root@localhost -p 5000 BACKUP=1111111111_gitlab_backup.tar gitlab-rake gitlab:backup:restore
+		ssh -S ~/.ssh/intgit.sock root@localhost -p $PORT BACKUP=1111111111 gitlab-rake gitlab:backup:restore <<< yes
 	else
 		echo "Not running restore" 
 		echo "Backup located at /var/opt/gitlab/backups/1111111111_gitlab_backup.tar"
@@ -57,7 +72,7 @@ then
 	cleanup 
 else
 
-	echo "VPN Enviro not correct, connected to $VPNENV" 
+	echo "VPN Enviro not correct, connected to: $VPNENV" 
 	echo "Check VPN connection to d4p4, or start NA Client"
 	cleanup 1
 fi
