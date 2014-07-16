@@ -1,4 +1,7 @@
 #!/bin/bash
+# This script connects to the local, main, Gitlab server; backs up the server and copies it over to the
+# Gitlab server in Integration and runs the rake:restore task to get a clean instance.
+
 cleanup () {
 	echo "Cleaning up sockets and exiting"
 	test -e ~/.ssh/labgit.sock && ssh -S ~/.ssh/labgit.sock -O exit root@$GITLAB
