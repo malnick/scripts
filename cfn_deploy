@@ -1,0 +1,24 @@
+#!/bin/bash
+# Create a new stack 
+
+while [[ $# > 1 ]]
+do
+key="$1"
+
+case $key in
+    -c|--cfn-path)
+      CFN_PATH="$2"
+      shift # past argument
+      ;;
+    -n|--cfn-name)
+      CFN_NAME="$2"
+      shift # past argument
+      ;;
+    *)
+      echo "Must pass --cfn-path and --cfn-name"
+    ;;
+esac
+shift # past argument or value
+done
+
+aws cloudformation create-stack --stack-name $CFN_NAME --template-body file://$CFN_PATH
