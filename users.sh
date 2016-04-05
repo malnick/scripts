@@ -15,6 +15,19 @@ do
   do
     getuid
     echo "Setting host $h with user $u with id $ID"
-    ssh -i ~/.ssh/mesos_dev.pem centos@$h useradd $u -u $ID
+    ssh -i ~/.ssh/mesos_dev.pem centos@$h sudo useradd $u -u $ID
   done
 done
+
+
+##################
+# Hosts for Test #
+##################
+
+# 52.38.10.229 
+# 52.27.149.70 
+# 52.36.206.9 
+# 52.25.9.34 
+# 52.36.220.149
+
+# User 'centos'
